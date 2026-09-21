@@ -5,6 +5,7 @@
   'use strict';
 
   const TOKEN_KEY = 'github_contents_pat';
+  const PANEL_HIDDEN_KEY = 'github_sync_panel_hidden';
   const META = {
     changedAt: 'github_sync_changed_at',
     syncedSha: 'github_sync_synced_sha'
@@ -119,7 +120,10 @@
     panel.innerHTML = `
       <div class="sync-panel-head">
         <span class="sync-title">📁 Guardar Disco.xlsx no GitHub</span>
-        <span id="syncStatus" class="sync-status local">Local</span>
+        <div class="sync-head-actions">
+          <span id="syncStatus" class="sync-status local">Local</span>
+          <button id="syncHidePanel" type="button" class="sync-close" title="Ocultar esta caixa" aria-label="Ocultar a caixa de sincronização">×</button>
+        </div>
       </div>
       <div id="syncAccount" class="sync-account">Apenas neste dispositivo.</div>
       <div class="sync-controls">
@@ -136,6 +140,28 @@
       <div class="sync-help">Use um token fine-grained limitado a este único repositório, com <b>Contents: Read and write</b>. O token é guardado só neste browser.</div>
       <div class="sync-warning">Aviso: qualquer JavaScript ou extensão que corra neste site pode aceder a um token guardado no browser. Uso estritamente pessoal. Nunca partilhe o token.</div>`;
     header.insertAdjacentElement('afterend', panel);
+
+    // A caixa pode ficar totalmente oculta. Um pequeno botão no cabeçalho
+    // permite voltar a abri-la sem interromper a sincronização.
+    const launchButton = document.createElement('button');
+    launchButton.id = 'syncShowPanel';
+    launchButton.type = 'button';
+    launchButton.className = 'icon-btn sync-launch';
+    launchButton.textContent = '☁️';
+    launchButton.title = 'Mostrar opções de sincronização';
+    launchButton.setAttribute('aria-label', 'Mostrar opções de sincronização');
+    const headerControls = header.querySelector('.header-controls');
+    if (headerControls) headerControls.insertBefore(launchButton, headerControls.firstChild);
+    else header.appendChild(launchButton);
+
+    const setPanelHidden = hidden => {
+      panel.hidden = hidden;
+      launchButton.hidden = !hidden;
+      nativeSet.call(localStorage, PANEL_HIDDEN_KEY, hidden ? '1' : '0');
+    };
+    document.getElementById('syncHidePanel').addEventListener('click', () => setPanelHidden(true));
+    launchButton.addEventListener('click', () => setPanelHidden(false));
+    setPanelHidden(localStorage.getItem(PANEL_HIDDEN_KEY) === '1');
 
     const tokenInput = document.getElementById('githubToken');
     const showButton = document.getElementById('githubShowToken');

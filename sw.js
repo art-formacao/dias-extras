@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calculadora-extras-v2';
+const CACHE_NAME = 'calculadora-extras-v3';
 const APP_SHELL = [
   './', './index.html', './config.js', './sync.css', './github-sync.js',
   './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'
