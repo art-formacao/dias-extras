@@ -3,8 +3,8 @@
  * no localStorage deste dispositivo; nunca o coloque neste ficheiro.
  */
 window.GITHUB_CONFIG = {
-  owner: 'SEU_UTILIZADOR',
-  repo: 'SEU_REPOSITORIO',
+  owner: 'art-formacao',
+  repo: 'dias-extras',
   branch: 'main',
   path: 'Disco.xlsx'
 };
