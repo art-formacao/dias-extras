@@ -12,7 +12,9 @@ Esta versão não usa token, Supabase nem ligação à API do GitHub. Os registo
 - PDF mensal limitado a uma página;
 - Instalação no ecrã principal com o logótipo fornecido;
 - Importação e exportação manual do `Disco.xlsx`;
-- Carta de dados locais ocultável pelo botão **X**, com botão **💾** no cabeçalho para voltar a mostrá-la.
+- Menu hambúrguer no canto superior direito com Meses, seleção/criação/eliminação do ano e exportação do `Disco.xlsx`;
+- Secção **Vista** com interruptores para mostrar ou ocultar a carta de dados locais, as definições de valores e os valores monetários;
+- Cabeçalho compacto apenas com o nome, tema claro/escuro e menu.
 
 ## Como publicar
 

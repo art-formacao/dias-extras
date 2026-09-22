@@ -154,57 +154,39 @@
     panel.innerHTML = `
       <div class="sync-panel-head">
         <span class="sync-title">📱 Dados guardados neste dispositivo</span>
-        <div class="sync-head-actions">
-          <span id="localExcelStatus" class="sync-status local">Local</span>
-          <button id="localExcelHidePanel" type="button" class="sync-close" title="Ocultar esta carta" aria-label="Ocultar a carta de dados locais">×</button>
-        </div>
+        <span id="localExcelStatus" class="sync-status local">Local</span>
       </div>
       <div id="localExcelDetail" class="sync-account">As alterações são guardadas automaticamente neste telemóvel ou computador.</div>
       <div class="sync-controls local-excel-controls">
-        <button id="localExcelExport" type="button">📤 Exportar Disco.xlsx</button>
         <button id="localExcelImport" type="button" class="secondary">📥 Importar Disco.xlsx</button>
         <input id="localExcelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
       </div>
-      <div class="sync-help">Para criar uma cópia de segurança ou passar os dados para outro dispositivo, exporte o Excel. Para restaurar os dados, selecione esse mesmo Disco.xlsx em “Importar”.</div>`;
+      <div class="sync-help">Para criar uma cópia de segurança, use no menu ☰ a opção “Exportar todos os dados”. Para restaurar os dados, selecione esse mesmo Disco.xlsx em “Importar”.</div>`;
     header.insertAdjacentElement('afterend', panel);
 
-    const launchButton = document.createElement('button');
-    launchButton.id = 'localExcelShowPanel';
-    launchButton.type = 'button';
-    launchButton.className = 'icon-btn local-excel-launch';
-    launchButton.textContent = '💾';
-    launchButton.title = 'Mostrar dados guardados neste dispositivo';
-    launchButton.setAttribute('aria-label', 'Mostrar a carta de dados locais');
-    const headerControls = header.querySelector('.header-controls');
-    if (headerControls) headerControls.insertBefore(launchButton, headerControls.firstChild);
-    else header.appendChild(launchButton);
-
-    const setPanelHidden = hidden => {
-      panel.hidden = hidden;
-      launchButton.hidden = !hidden;
-      localStorage.setItem(PANEL_HIDDEN_KEY, hidden ? '1' : '0');
+    const viewSwitch = document.getElementById('menuMostrarDados');
+    const setPanelVisible = visible => {
+      panel.hidden = !visible;
+      if (viewSwitch) viewSwitch.checked = visible;
+      localStorage.setItem(PANEL_HIDDEN_KEY, visible ? '0' : '1');
     };
-    document.getElementById('localExcelHidePanel').addEventListener('click', () => setPanelHidden(true));
-    launchButton.addEventListener('click', () => setPanelHidden(false));
-    setPanelHidden(localStorage.getItem(PANEL_HIDDEN_KEY) === '1');
+    if (viewSwitch) {
+      viewSwitch.addEventListener('change', () => setPanelVisible(viewSwitch.checked));
+    }
+    setPanelVisible(localStorage.getItem(PANEL_HIDDEN_KEY) !== '1');
 
     const input = document.getElementById('localExcelFile');
-    document.getElementById('localExcelExport').addEventListener('click', exportExcel);
     document.getElementById('localExcelImport').addEventListener('click', () => input.click());
     input.addEventListener('change', async () => {
       await importExcel(input.files && input.files[0]);
       input.value = '';
     });
 
-    const historyCard = Array.from(document.querySelectorAll('.card')).find(card => card.querySelector('#listaMeses'));
-    if (historyCard) {
-      const exportButton = document.createElement('button');
-      exportButton.type = 'button';
-      exportButton.className = 'btn btn-export';
-      exportButton.textContent = '📊 Exportar todos os dados para Disco.xlsx';
-      exportButton.addEventListener('click', exportExcel);
-      historyCard.appendChild(exportButton);
-    }
+    const menuExportButton = document.getElementById('menuExportExcel');
+    if (menuExportButton) menuExportButton.addEventListener('click', () => {
+      exportExcel();
+      if (typeof fecharMenu === 'function') fecharMenu();
+    });
   }
 
   window.addEventListener('load', () => {

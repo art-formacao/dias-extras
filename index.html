@@ -435,6 +435,135 @@
         .badge-fer { background: #d1f2d8; color: #1f7a35; }
         .badge-mot { background: #e1bee7; color: #7b1fa2; }
         .badge-esc { background: #e2e2e7; color: #48484a; }
+
+        .hamburger-btn {
+            font-size: 23px;
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 499;
+            background: rgba(0,0,0,0.34);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .22s ease, visibility .22s ease;
+        }
+
+        .menu-overlay.open { opacity: 1; visibility: visible; }
+
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            z-index: 500;
+            width: min(88vw, 350px);
+            height: 100%;
+            padding: max(16px, env(safe-area-inset-top)) 16px 24px;
+            overflow-y: auto;
+            background: var(--card-bg);
+            color: var(--text-color);
+            box-shadow: -8px 0 30px rgba(0,0,0,.18);
+            transform: translateX(105%);
+            transition: transform .24s ease;
+        }
+
+        .side-menu.open { transform: translateX(0); }
+        body.menu-open { overflow: hidden; }
+
+        .side-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 20px;
+        }
+
+        .menu-close {
+            width: 30px;
+            height: 30px;
+            border: 0;
+            border-radius: 50%;
+            background: #e5e5ea;
+            color: #636366;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .menu-close:hover, .menu-close:active { background: var(--danger-color); color: white; }
+
+        .menu-section-title {
+            margin: 20px 2px 8px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .65px;
+            text-transform: uppercase;
+        }
+
+        .menu-main-action {
+            width: 100%;
+            margin-top: 14px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 650;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .menu-main-action.excel { color: var(--accent-color); }
+
+        .menu-year-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 42px 42px;
+            gap: 8px;
+            align-items: center;
+            padding: 7px;
+            border: 1px solid var(--border-color);
+            border-radius: 11px;
+            background: var(--input-bg);
+        }
+
+        .menu-year-row .select-year { width: 100%; }
+
+        .menu-square-btn {
+            width: 42px;
+            height: 38px;
+            border: 0;
+            border-radius: 9px;
+            font-size: 17px;
+            cursor: pointer;
+        }
+        .menu-square-btn.add { background: rgba(0,122,255,.14); color: var(--accent-color); font-weight: 800; }
+        .menu-square-btn.delete { background: rgba(255,59,48,.13); color: var(--danger-color); }
+
+        .menu-toggle-row {
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 9px 2px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .menu-toggle-row .switch { flex: 0 0 auto; }
+
+        @media (max-width: 390px) {
+            h1 { font-size: 20px; }
+            .header { padding: 12px 14px; }
+        }
     </style>
 </head>
 <body>
@@ -442,18 +571,47 @@
     <div class="header">
         <h1>Calculadora Extras</h1>
         <div class="header-controls">
-            <button id="btnOcultar" class="icon-btn" onclick="toggleOcultarValores()" title="Ocultar/Mostrar Valores">👁️</button>
-            <button id="btnTema" class="icon-btn" onclick="toggleTema()" title="Mudar Tema">🌙</button>
-            <div class="year-selector-container">
-                <select id="selectorAno" class="select-year" onchange="mudarAnoAtivo()"></select>
-                <button class="btn-add-year" onclick="criarNovoAno()" title="Adicionar Ano">+</button>
-                <button class="btn-del-year" onclick="eliminarAnoAtivo()" title="Eliminar Ano Ativo">🗑️</button>
-            </div>
+            <button id="btnTema" class="icon-btn" onclick="toggleTema()" title="Mudar entre modo escuro e claro" aria-label="Mudar entre modo escuro e claro">🌙</button>
+            <button id="btnMenu" class="icon-btn hamburger-btn" onclick="toggleMenu()" title="Abrir menu" aria-label="Abrir menu">☰</button>
         </div>
     </div>
 
+    <div id="menuOverlay" class="menu-overlay" onclick="fecharMenu()"></div>
+    <aside id="menuLateral" class="side-menu" aria-hidden="true">
+        <div class="side-menu-header">
+            <strong>Menu</strong>
+            <button type="button" class="menu-close" onclick="fecharMenu()" aria-label="Fechar menu">×</button>
+        </div>
+
+        <button type="button" class="menu-main-action" onclick="irParaMeses()">📅 Meses</button>
+
+        <div class="menu-section-title">Ano</div>
+        <div class="menu-year-row">
+            <select id="selectorAno" class="select-year" onchange="mudarAnoAtivo()"></select>
+            <button class="menu-square-btn add" onclick="criarNovoAno()" title="Adicionar ano" aria-label="Adicionar ano">+</button>
+            <button class="menu-square-btn delete" onclick="eliminarAnoAtivo()" title="Eliminar ano ativo" aria-label="Eliminar ano ativo">🗑️</button>
+        </div>
+
+        <div class="menu-section-title">Vista</div>
+        <div class="menu-toggle-row">
+            <span>Dados guardados no dispositivo</span>
+            <label class="switch"><input type="checkbox" id="menuMostrarDados"><span class="slider"></span></label>
+        </div>
+        <div class="menu-toggle-row">
+            <span>Definições de valores</span>
+            <label class="switch"><input type="checkbox" id="menuMostrarDefinicoes"><span class="slider"></span></label>
+        </div>
+        <div class="menu-toggle-row">
+            <span>Mostrar valores monetários</span>
+            <label class="switch"><input type="checkbox" id="menuMostrarValores"><span class="slider"></span></label>
+        </div>
+
+        <div class="menu-section-title">Excel</div>
+        <button id="menuExportExcel" type="button" class="menu-main-action excel">📤 Exportar todos os dados para Disco.xlsx</button>
+    </aside>
+
     <!-- CARD DEFINIÇÕES -->
-    <div class="card">
+    <div id="cardDefinicoes" class="card">
         <div class="collapsible-header" onclick="toggleConfig()">
             <span id="tituloDefinicoes">⚙️ Definições de Valores (2026)</span>
             <span id="configIcon" class="icon">+</span>
@@ -533,7 +691,7 @@
     </div>
 
     <!-- CARD HISTÓRICO -->
-    <div class="card">
+    <div id="cardMeses" class="card">
         <h3 style="margin-top:0; font-size:17px; font-weight:600;">Histórico de Meses</h3>
         <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">Ciclo: Dia 21 a 20</div>
         <div id="listaMeses"></div>
@@ -624,6 +782,7 @@
         
         let ocultarValores = localStorage.getItem('calc_ocultar_valores') === 'true';
         let temaEscuro = localStorage.getItem('calc_tema_escuro') === 'true';
+        let mostrarDefinicoes = localStorage.getItem('calc_mostrar_definicoes') !== 'false';
         
         let mesAtivoChave = null;
 
@@ -635,9 +794,11 @@
                 document.documentElement.setAttribute('data-theme', 'dark');
                 document.getElementById('btnTema').innerText = '☀️';
             }
-            if (ocultarValores) {
-                document.getElementById('btnOcultar').innerText = '🙈';
-            }
+            document.getElementById('menuMostrarValores').checked = !ocultarValores;
+            document.getElementById('menuMostrarDefinicoes').checked = mostrarDefinicoes;
+            aplicarVisibilidadeDefinicoes();
+            document.getElementById('menuMostrarValores').addEventListener('change', toggleOcultarValores);
+            document.getElementById('menuMostrarDefinicoes').addEventListener('change', alterarVisibilidadeDefinicoes);
 
             atualizarSeletorAnosDOM();
             carregarConfigAnoAtual();
@@ -663,10 +824,41 @@
             }
         }
 
+        function toggleMenu() {
+            const menu = document.getElementById('menuLateral');
+            const overlay = document.getElementById('menuOverlay');
+            const abrir = !menu.classList.contains('open');
+            menu.classList.toggle('open', abrir);
+            overlay.classList.toggle('open', abrir);
+            document.body.classList.toggle('menu-open', abrir);
+            menu.setAttribute('aria-hidden', abrir ? 'false' : 'true');
+        }
+
+        function fecharMenu() {
+            document.getElementById('menuLateral').classList.remove('open');
+            document.getElementById('menuOverlay').classList.remove('open');
+            document.body.classList.remove('menu-open');
+            document.getElementById('menuLateral').setAttribute('aria-hidden', 'true');
+        }
+
+        function irParaMeses() {
+            fecharMenu();
+            setTimeout(() => document.getElementById('cardMeses').scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+        }
+
+        function aplicarVisibilidadeDefinicoes() {
+            document.getElementById('cardDefinicoes').hidden = !mostrarDefinicoes;
+        }
+
+        function alterarVisibilidadeDefinicoes() {
+            mostrarDefinicoes = document.getElementById('menuMostrarDefinicoes').checked;
+            localStorage.setItem('calc_mostrar_definicoes', mostrarDefinicoes);
+            aplicarVisibilidadeDefinicoes();
+        }
+
         function toggleOcultarValores() {
-            ocultarValores = !ocultarValores;
+            ocultarValores = !document.getElementById('menuMostrarValores').checked;
             localStorage.setItem('calc_ocultar_valores', ocultarValores);
-            document.getElementById('btnOcultar').innerText = ocultarValores ? '🙈' : '👁️';
             atualizarHistorico();
             if (mesAtivoChave) {
                 atualizarListaDiasDetalhes();
