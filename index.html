@@ -8,6 +8,8 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="stylesheet" href="sync.css">
     <script src="xlsx.full.min.js"></script>
+    <script src="html2canvas.min.js"></script>
+    <script src="jspdf.umd.min.js"></script>
     <style>
         :root {
             --bg-color: #f2f2f7;
@@ -564,6 +566,139 @@
             h1 { font-size: 20px; }
             .header { padding: 12px 14px; }
         }
+
+        .pdf-preview-page {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 700;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: var(--bg-color);
+            color: var(--text-color);
+            overscroll-behavior-y: contain;
+        }
+        .pdf-preview-page.open { display: block; }
+        .pdf-preview-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            gap: 10px;
+            padding: max(10px, env(safe-area-inset-top)) 12px 10px;
+            border-bottom: 1px solid var(--border-color);
+            background: color-mix(in srgb, var(--bg-color) 92%, transparent);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+        .pdf-preview-toolbar > strong { font-size: 16px; }
+        .pdf-back-btn, .pdf-toolbar-actions button {
+            border: 0;
+            border-radius: 9px;
+            padding: 9px 11px;
+            color: var(--accent-color);
+            background: var(--card-bg);
+            font-size: 13px;
+            font-weight: 650;
+            cursor: pointer;
+        }
+        .pdf-back-btn { font-size: 15px; padding-left: 7px; }
+        .pdf-toolbar-actions {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .pdf-toolbar-actions button:last-child { background: var(--accent-color); color: #fff; }
+        .pdf-toolbar-actions button:disabled { opacity: .55; }
+        .pdf-mobile-content {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 14px 14px calc(30px + env(safe-area-inset-bottom));
+        }
+        .pdf-mobile-header, .pdf-mobile-section {
+            width: 100%;
+            margin-bottom: 12px;
+            padding: 15px;
+            border-radius: 13px;
+            background: var(--card-bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,.05);
+            overflow-wrap: anywhere;
+        }
+        .pdf-mobile-header h2 { margin: 0; font-size: 21px; }
+        .pdf-mobile-header h3 { margin: 4px 0 0; font-size: 17px; color: var(--accent-color); }
+        .pdf-mobile-period { margin-top: 8px; color: var(--text-secondary); font-size: 13px; line-height: 1.4; }
+        .pdf-mobile-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 9px;
+            margin-bottom: 12px;
+        }
+        .pdf-mobile-summary-item {
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 11px;
+            background: var(--card-bg);
+        }
+        .pdf-mobile-summary-label { color: var(--text-secondary); font-size: 11px; margin-bottom: 4px; }
+        .pdf-mobile-summary-value { font-size: 16px; font-weight: 750; overflow-wrap: anywhere; }
+        .pdf-mobile-summary-value.total { color: #168537; }
+        .pdf-mobile-section h3 { margin: 0 0 10px; font-size: 16px; }
+        .pdf-mobile-day {
+            width: 100%;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .pdf-mobile-day:last-child { border-bottom: 0; }
+        .pdf-mobile-day-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .pdf-mobile-day-date { font-weight: 750; white-space: nowrap; }
+        .pdf-mobile-day-value { color: #168537; font-weight: 750; white-space: nowrap; }
+        .pdf-mobile-day-type { margin-top: 5px; font-size: 13px; font-weight: 650; line-height: 1.35; }
+        .pdf-mobile-day-calc { margin-top: 5px; color: var(--text-secondary); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+        .pdf-mobile-observation { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.5; }
+        .pdf-mobile-footer { color: var(--text-secondary); text-align: center; font-size: 11px; padding: 4px 0 10px; }
+
+        .pdf-render-sheet {
+            position: fixed;
+            left: -10000px;
+            top: 0;
+            width: 794px;
+            padding: 38px;
+            background: #fff;
+            color: #111;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            overflow: visible;
+        }
+        .pdf-render-sheet .print-header { border-bottom: 2px solid #222; padding-bottom: 9px; margin-bottom: 12px; }
+        .pdf-render-sheet h1 { margin: 0; font-size: 25px; }
+        .pdf-render-sheet h2 { margin: 4px 0 0; font-size: 18px; }
+        .pdf-render-sheet .print-period { margin-top: 6px; color: #555; font-weight: 600; }
+        .pdf-render-sheet .print-summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-bottom: 12px; }
+        .pdf-render-sheet .print-summary-item { border: 1px solid #d8d8dd; border-radius: 6px; padding: 8px; min-width: 0; }
+        .pdf-render-sheet .print-label { color: #666; font-size: 10px; margin-bottom: 3px; }
+        .pdf-render-sheet .print-value { font-weight: 700; font-size: 13px; }
+        .pdf-render-sheet .print-total { color: #168537; }
+        .pdf-render-sheet h3 { margin: 11px 0 6px; font-size: 14px; }
+        .pdf-render-sheet table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .pdf-render-sheet th { background: #f0f0f4; text-align: left; padding: 5px 6px; border: 1px solid #d3d3d8; font-size: 10px; }
+        .pdf-render-sheet td { padding: 5px 6px; border: 1px solid #dedee3; vertical-align: top; line-height: 1.2; overflow-wrap: anywhere; font-size: 10px; }
+        .pdf-render-sheet .print-date { width: 14%; }
+        .pdf-render-sheet .print-detail { width: 68%; }
+        .pdf-render-sheet .print-value-col { width: 18%; text-align: right; }
+        .pdf-render-sheet .print-type { font-weight: 700; margin-bottom: 2px; }
+        .pdf-render-sheet .print-calc { color: #555; }
+        .pdf-render-sheet .print-observations { border: 1px solid #d8d8dd; border-radius: 6px; padding: 9px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.35; font-size: 11px; }
+        .pdf-render-sheet .print-footer { margin-top: 8px; color: #777; font-size: 9px; text-align: right; }
     </style>
 </head>
 <body>
@@ -697,6 +832,20 @@
         <div id="listaMeses"></div>
     </div>
 
+    <!-- PRÉ-VISUALIZAÇÃO VERTICAL DO RELATÓRIO -->
+    <div id="pdfPreviewPage" class="pdf-preview-page" aria-hidden="true">
+        <div class="pdf-preview-toolbar">
+            <button type="button" class="pdf-back-btn" onclick="fecharRelatorioPDF()">‹ Voltar</button>
+            <strong>Relatório PDF</strong>
+            <div class="pdf-toolbar-actions">
+                <button id="btnPartilharPDF" type="button" onclick="partilharRelatorioPDF()">Partilhar</button>
+                <button id="btnGuardarPDF" type="button" onclick="guardarRelatorioPDF()">Guardar PDF</button>
+            </div>
+        </div>
+        <main id="pdfMobileContent" class="pdf-mobile-content"></main>
+    </div>
+    <div id="pdfRenderSheet" class="pdf-render-sheet" aria-hidden="true"></div>
+
     <!-- MODAL DETALHES -->
     <div id="detalhesMesPage" class="details-container">
         <div class="nav-bar">
@@ -747,7 +896,7 @@
                 <span id="detalhesTotalGeral" class="valor-mascaravel" style="color: #34c759;">0,00€</span>
             </div>
 
-            <button class="btn btn-export" onclick="exportarMesPDF()">📄 Exportar PDF (1 página)</button>
+            <button class="btn btn-export" onclick="exportarMesPDF()">📄 Ver, partilhar ou guardar PDF</button>
 
             <!-- Botão discreto para apagar o mês -->
             <button class="btn-delete-discreet" onclick="eliminarMesCompleto()">⚠️ Eliminar este mês completo</button>
@@ -1455,7 +1604,7 @@
             return tipos.map(tipo => nomes[tipo] || tipo).join(' · ') || 'Dia extra';
         }
 
-        function exportarMesPDF() {
+        function exportarMesPDFLegado() {
             if (!mesAtivoChave) return;
 
             const dias = registros[mesAtivoChave] || [];
@@ -1647,6 +1796,208 @@
                 janelaPDF.focus();
                 janelaPDF.print();
             }, 350);
+        }
+
+        let dadosRelatorioPDF = null;
+        let promessaBlobPDF = null;
+
+        function obterDadosRelatorioPDF() {
+            if (!mesAtivoChave) return null;
+            const dias = (registros[mesAtivoChave] || []).slice().sort((a, b) => String(a.data).localeCompare(String(b.data)));
+            const anoDoMes = mesAtivoChave.split('-')[0];
+            const cfg = configAnual[anoDoMes] || configAnual[anoAtivo] || VALORES_PADRAO;
+            const premio = Number(prizes[mesAtivoChave] || 0);
+            const observacao = observacoes[mesAtivoChave] || 'Sem observações.';
+            const totalExtras = dias.reduce((total, dia) => total + Number(dia.valor || 0), 0);
+            const nomeMes = formatarMesChave(mesAtivoChave);
+            return {
+                dias,
+                cfg,
+                premio,
+                observacao,
+                totalExtras,
+                totalBruto: Number(cfg.ordenado || 0) + totalExtras + premio,
+                nomeMes,
+                periodo: obterPeriodoCompleto(mesAtivoChave),
+                nomeFicheiro: `Extras_${nomeMes.replaceAll(' ', '_')}.pdf`,
+                criadoEm: new Date().toLocaleDateString('pt-PT')
+            };
+        }
+
+        function obterCalculoDiaPDF(dia) {
+            return (dia.parcelas || [])
+                .map(parcela => `${formatarMoedaPDF(parcela.valor)} (${parcela.label})`)
+                .join(' + ') || '—';
+        }
+
+        function construirVistaMovelPDF(dados) {
+            const diasHtml = dados.dias.length ? dados.dias.map(dia => `
+                <article class="pdf-mobile-day">
+                    <div class="pdf-mobile-day-top">
+                        <span class="pdf-mobile-day-date">${escaparHtml(dia.data.split('-').reverse().join('/'))}</span>
+                        <span class="pdf-mobile-day-value">+${escaparHtml(formatarMoedaPDF(dia.valor))}</span>
+                    </div>
+                    <div class="pdf-mobile-day-type">${escaparHtml(obterDescricaoDiaPDF(dia))}</div>
+                    <div class="pdf-mobile-day-calc">${escaparHtml(obterCalculoDiaPDF(dia))}</div>
+                </article>`).join('') : '<div style="color:var(--text-secondary);font-size:14px;">Nenhum dia extra registado.</div>';
+
+            return `
+                <section class="pdf-mobile-header">
+                    <h2>Mapa de Dias Extra</h2>
+                    <h3>${escaparHtml(dados.nomeMes)}</h3>
+                    <div class="pdf-mobile-period">Período: ${escaparHtml(dados.periodo)}<br>Do dia 21 ao dia 20</div>
+                </section>
+                <section class="pdf-mobile-summary">
+                    <div class="pdf-mobile-summary-item"><div class="pdf-mobile-summary-label">Ordenado base</div><div class="pdf-mobile-summary-value">${escaparHtml(formatarMoedaPDF(dados.cfg.ordenado))}</div></div>
+                    <div class="pdf-mobile-summary-item"><div class="pdf-mobile-summary-label">Dias extra</div><div class="pdf-mobile-summary-value">${escaparHtml(formatarMoedaPDF(dados.totalExtras))}</div></div>
+                    <div class="pdf-mobile-summary-item"><div class="pdf-mobile-summary-label">Prémio</div><div class="pdf-mobile-summary-value">${escaparHtml(formatarMoedaPDF(dados.premio))}</div></div>
+                    <div class="pdf-mobile-summary-item"><div class="pdf-mobile-summary-label">Total bruto</div><div class="pdf-mobile-summary-value total">${escaparHtml(formatarMoedaPDF(dados.totalBruto))}</div></div>
+                </section>
+                <section class="pdf-mobile-section">
+                    <h3>Dias registados (${dados.dias.length})</h3>
+                    ${diasHtml}
+                </section>
+                <section class="pdf-mobile-section">
+                    <h3>Observações</h3>
+                    <div class="pdf-mobile-observation">${escaparHtml(dados.observacao)}</div>
+                </section>
+                <div class="pdf-mobile-footer">Documento preparado em ${escaparHtml(dados.criadoEm)}</div>`;
+        }
+
+        function construirFolhaRenderPDF(dados) {
+            const linhas = dados.dias.length ? dados.dias.map(dia => `
+                <tr>
+                    <td class="print-date"><strong>${escaparHtml(dia.data.split('-').reverse().join('/'))}</strong></td>
+                    <td class="print-detail"><div class="print-type">${escaparHtml(obterDescricaoDiaPDF(dia))}</div><div class="print-calc">${escaparHtml(obterCalculoDiaPDF(dia))}</div></td>
+                    <td class="print-value-col"><strong>${escaparHtml(formatarMoedaPDF(dia.valor))}</strong></td>
+                </tr>`).join('') : '<tr><td colspan="3" style="text-align:center;color:#666;">Nenhum dia extra registado.</td></tr>';
+
+            return `
+                <header class="print-header">
+                    <h1>Mapa de Dias Extra</h1>
+                    <h2>${escaparHtml(dados.nomeMes)}</h2>
+                    <div class="print-period">Período: ${escaparHtml(dados.periodo)} (dia 21 a dia 20)</div>
+                </header>
+                <section class="print-summary">
+                    <div class="print-summary-item"><div class="print-label">Ordenado base</div><div class="print-value">${escaparHtml(formatarMoedaPDF(dados.cfg.ordenado))}</div></div>
+                    <div class="print-summary-item"><div class="print-label">Dias extra</div><div class="print-value">${escaparHtml(formatarMoedaPDF(dados.totalExtras))}</div></div>
+                    <div class="print-summary-item"><div class="print-label">Prémio</div><div class="print-value">${escaparHtml(formatarMoedaPDF(dados.premio))}</div></div>
+                    <div class="print-summary-item"><div class="print-label">Total bruto</div><div class="print-value print-total">${escaparHtml(formatarMoedaPDF(dados.totalBruto))}</div></div>
+                </section>
+                <h3>Dias registados (${dados.dias.length})</h3>
+                <table><thead><tr><th>Data</th><th>Tipo e cálculo</th><th style="text-align:right;">Valor</th></tr></thead><tbody>${linhas}</tbody></table>
+                <h3>Observações</h3>
+                <div class="print-observations">${escaparHtml(dados.observacao)}</div>
+                <div class="print-footer">Documento preparado em ${escaparHtml(dados.criadoEm)}</div>`;
+        }
+
+        async function criarBlobRelatorioPDF() {
+            if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
+                throw new Error('Os componentes necessários para criar o PDF não estão disponíveis.');
+            }
+            if (document.fonts && document.fonts.ready) await document.fonts.ready;
+            const folha = document.getElementById('pdfRenderSheet');
+            const canvas = await window.html2canvas(folha, {
+                backgroundColor: '#ffffff',
+                scale: Math.min(2, Math.max(1.25, window.devicePixelRatio || 1.5)),
+                logging: false,
+                useCORS: true,
+                width: folha.scrollWidth,
+                height: folha.scrollHeight,
+                windowWidth: 794
+            });
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+            const larguraPagina = 210;
+            const alturaPagina = 297;
+            const margem = 8;
+            const larguraUtil = larguraPagina - margem * 2;
+            const alturaUtil = alturaPagina - margem * 2;
+            const escala = Math.min(larguraUtil / canvas.width, alturaUtil / canvas.height);
+            const larguraImagem = canvas.width * escala;
+            const alturaImagem = canvas.height * escala;
+            const x = (larguraPagina - larguraImagem) / 2;
+            pdf.addImage(canvas.toDataURL('image/jpeg', 0.94), 'JPEG', x, margem, larguraImagem, alturaImagem, undefined, 'FAST');
+            return pdf.output('blob');
+        }
+
+        function exportarMesPDF() {
+            const dados = obterDadosRelatorioPDF();
+            if (!dados) return;
+            dadosRelatorioPDF = dados;
+            document.getElementById('pdfMobileContent').innerHTML = construirVistaMovelPDF(dados);
+            document.getElementById('pdfRenderSheet').innerHTML = construirFolhaRenderPDF(dados);
+            const pagina = document.getElementById('pdfPreviewPage');
+            pagina.classList.add('open');
+            pagina.setAttribute('aria-hidden', 'false');
+            pagina.scrollTop = 0;
+
+            const partilhar = document.getElementById('btnPartilharPDF');
+            const guardar = document.getElementById('btnGuardarPDF');
+            partilhar.disabled = true;
+            guardar.disabled = true;
+            partilhar.textContent = 'A preparar…';
+            promessaBlobPDF = new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+                .then(criarBlobRelatorioPDF)
+                .then(blob => {
+                    partilhar.disabled = false;
+                    guardar.disabled = false;
+                    partilhar.textContent = 'Partilhar';
+                    return blob;
+                })
+                .catch(error => {
+                    partilhar.textContent = 'Indisponível';
+                    guardar.textContent = 'Erro no PDF';
+                    alert(error.message || 'Não foi possível preparar o PDF.');
+                    throw error;
+                });
+        }
+
+        function fecharRelatorioPDF() {
+            const pagina = document.getElementById('pdfPreviewPage');
+            pagina.classList.remove('open');
+            pagina.setAttribute('aria-hidden', 'true');
+        }
+
+        function descarregarBlobPDF(blob, nomeFicheiro) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = nomeFicheiro;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 3000);
+        }
+
+        async function guardarRelatorioPDF() {
+            if (!promessaBlobPDF || !dadosRelatorioPDF) return;
+            try {
+                const blob = await promessaBlobPDF;
+                descarregarBlobPDF(blob, dadosRelatorioPDF.nomeFicheiro);
+            } catch (_) {}
+        }
+
+        async function partilharRelatorioPDF() {
+            if (!promessaBlobPDF || !dadosRelatorioPDF) return;
+            try {
+                const blob = await promessaBlobPDF;
+                const ficheiro = new File([blob], dadosRelatorioPDF.nomeFicheiro, { type: 'application/pdf' });
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [ficheiro] })) {
+                    await navigator.share({
+                        title: `Dias extra — ${dadosRelatorioPDF.nomeMes}`,
+                        text: `Mapa de dias extra de ${dadosRelatorioPDF.nomeMes}, período ${dadosRelatorioPDF.periodo}.`,
+                        files: [ficheiro]
+                    });
+                } else {
+                    descarregarBlobPDF(blob, dadosRelatorioPDF.nomeFicheiro);
+                    alert('A partilha direta não está disponível neste navegador. O PDF foi guardado; pode anexá-lo ao WhatsApp ou email.');
+                }
+            } catch (error) {
+                if (error && error.name !== 'AbortError') {
+                    alert(error.message || 'Não foi possível partilhar o PDF.');
+                }
+            }
         }
 
         function apagarDia(idDia) {

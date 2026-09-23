@@ -1,6 +1,7 @@
-const CACHE_NAME = 'calculadora-extras-local-v6';
+const CACHE_NAME = 'calculadora-extras-local-v7';
 const APP_SHELL = [
   './', './index.html', './sync.css', './local-excel.js', './xlsx.full.min.js',
+  './html2canvas.min.js', './jspdf.umd.min.js',
   './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'
 ];
 

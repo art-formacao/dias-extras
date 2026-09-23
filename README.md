@@ -9,7 +9,8 @@ Esta versão não usa token, Supabase nem ligação à API do GitHub. Os registo
 - Opção manual para marcar um feriado;
 - Períodos salariais de 21 a 20;
 - Prémios e observações mensais;
-- PDF mensal limitado a uma página;
+- Relatório mensal vertical adaptado ao telemóvel, com botão Voltar, scroll apenas para baixo e PDF limitado a uma página;
+- Partilha nativa do PDF para WhatsApp, email e outras aplicações instaladas, além da opção Guardar PDF;
 - Instalação no ecrã principal com o logótipo fornecido;
 - Importação e exportação manual do `Disco.xlsx`;
 - Menu hambúrguer no canto superior direito com Meses, seleção/criação/eliminação do ano e exportação do `Disco.xlsx`;
