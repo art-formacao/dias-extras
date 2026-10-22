@@ -1316,7 +1316,7 @@
 
                     valorAcumulado += cfg.motorista;
                     tiposIdentificados.push('motorista');
-                    parcelas.push({ label: 'Extra Motorista (Feriado)', valor: cfg.motorista });
+                    parcelas.push({ label: 'Extra Motorista', valor: cfg.motorista });
                 }
                 else if (diaSemana === 6) { 
                     valorAcumulado += cfg.sabado;
@@ -1325,7 +1325,7 @@
 
                     valorAcumulado += cfg.motorista;
                     tiposIdentificados.push('motorista');
-                    parcelas.push({ label: 'Extra Motorista (Auto)', valor: cfg.motorista });
+                    parcelas.push({ label: 'Extra Motorista', valor: cfg.motorista });
                 } 
                 else if (diaSemana === 0) { 
                     valorAcumulado += cfg.domingo;
@@ -1334,7 +1334,7 @@
 
                     valorAcumulado += cfg.motorista;
                     tiposIdentificados.push('motorista');
-                    parcelas.push({ label: 'Extra Motorista (Auto)', valor: cfg.motorista });
+                    parcelas.push({ label: 'Extra Motorista', valor: cfg.motorista });
                 } 
                 else { 
                     if (!isMotoristaExtraManual) {
@@ -1522,7 +1522,7 @@
 
                     let contaMatematicaHtml = '';
                     if (d.parcelas && d.parcelas.length > 0 && !ocultarValores) {
-                        const textoParcelas = d.parcelas.map(p => `${p.valor.toFixed(2)}€ (${p.label})`).join(' + ');
+                        const textoParcelas = d.parcelas.map(p => `${p.valor.toFixed(2)}€ (${limparTextoCalculo(p.label)})`).join(' + ');
                         contaMatematicaHtml = `<div class="day-row-math">Conta: ${textoParcelas} = ${d.valor.toFixed(2)}€</div>`;
                     }
 
@@ -1627,7 +1627,7 @@
             const linhasDias = dias.length > 0 ? dias.map(dia => {
                 const dataFormatada = dia.data.split('-').reverse().join('/');
                 const conta = (dia.parcelas || [])
-                    .map(parcela => `${formatarMoedaPDF(parcela.valor)} (${parcela.label})`)
+                    .map(parcela => `${formatarMoedaPDF(parcela.valor)} (${limparTextoCalculo(parcela.label)})`)
                     .join(' + ');
 
                 return `
@@ -1753,10 +1753,8 @@
             </header>
 
             <section class="resumo">
-                <div class="resumo-item"><div class="resumo-label">Ordenado base</div><div class="resumo-valor">${escaparHtml(formatarMoedaPDF(cfg.ordenado))}</div></div>
                 <div class="resumo-item"><div class="resumo-label">Dias extra</div><div class="resumo-valor">${escaparHtml(formatarMoedaPDF(totalExtras))}</div></div>
                 <div class="resumo-item"><div class="resumo-label">Prémio</div><div class="resumo-valor">${escaparHtml(formatarMoedaPDF(premio))}</div></div>
-                <div class="resumo-item"><div class="resumo-label">Total bruto</div><div class="resumo-valor total">${escaparHtml(formatarMoedaPDF(totalBruto))}</div></div>
             </section>
 
             <h3>Dias registados (${dias.length})</h3>
@@ -1824,9 +1822,16 @@
             };
         }
 
+        function limparTextoCalculo(texto) {
+            return String(texto ?? '')
+                .replace(/\\s*\\((?:Auto|Feriado)\\)/gi, '')
+                .replace(/\\s{2,}/g, ' ')
+                .trim();
+        }
+
         function obterCalculoDiaPDF(dia) {
             return (dia.parcelas || [])
-                .map(parcela => `${formatarMoedaPDF(parcela.valor)} (${parcela.label})`)
+                .map(parcela => `${formatarMoedaPDF(parcela.valor)} (${limparTextoCalculo(parcela.label)})`)
                 .join(' + ') || '—';
         }
 
@@ -1848,10 +1853,8 @@
                     <div class="pdf-mobile-period">Período: ${escaparHtml(dados.periodo)}<br>Do dia 21 ao dia 20</div>
                 </section>
                 <section class="pdf-mobile-summary">
-                    <div class="pdf-mobile-summary-item"><div class="pdf-mobile-summary-label">Ordenado base</div><div class="pdf-mobile-summary-value">${escaparHtml(formatarMoedaPDF(dados.cfg.ordenado))}</div></div>
                     <div class="pdf-mobile-summary-item"><div class="pdf-mobile-summary-label">Dias extra</div><div class="pdf-mobile-summary-value">${escaparHtml(formatarMoedaPDF(dados.totalExtras))}</div></div>
                     <div class="pdf-mobile-summary-item"><div class="pdf-mobile-summary-label">Prémio</div><div class="pdf-mobile-summary-value">${escaparHtml(formatarMoedaPDF(dados.premio))}</div></div>
-                    <div class="pdf-mobile-summary-item"><div class="pdf-mobile-summary-label">Total bruto</div><div class="pdf-mobile-summary-value total">${escaparHtml(formatarMoedaPDF(dados.totalBruto))}</div></div>
                 </section>
                 <section class="pdf-mobile-section">
                     <h3>Dias registados (${dados.dias.length})</h3>
@@ -1879,10 +1882,8 @@
                     <div class="print-period">Período: ${escaparHtml(dados.periodo)} (dia 21 a dia 20)</div>
                 </header>
                 <section class="print-summary">
-                    <div class="print-summary-item"><div class="print-label">Ordenado base</div><div class="print-value">${escaparHtml(formatarMoedaPDF(dados.cfg.ordenado))}</div></div>
                     <div class="print-summary-item"><div class="print-label">Dias extra</div><div class="print-value">${escaparHtml(formatarMoedaPDF(dados.totalExtras))}</div></div>
                     <div class="print-summary-item"><div class="print-label">Prémio</div><div class="print-value">${escaparHtml(formatarMoedaPDF(dados.premio))}</div></div>
-                    <div class="print-summary-item"><div class="print-label">Total bruto</div><div class="print-value print-total">${escaparHtml(formatarMoedaPDF(dados.totalBruto))}</div></div>
                 </section>
                 <h3>Dias registados (${dados.dias.length})</h3>
                 <table><thead><tr><th>Data</th><th>Tipo e cálculo</th><th style="text-align:right;">Valor</th></tr></thead><tbody>${linhas}</tbody></table>
